@@ -31,19 +31,28 @@ def select_dir():
                 ssl_socket.send(b'False')
             else:
                 ssl_socket.send(dir_path.encode())
-            dirs = ssl_socket.recv(1024).decode()
-            if len(dirs) == 0:
-                dir_text.delete(1.0, END)
-                dir_text.insert(1.0, "Empty Directory")
-            elif dirs[0] != 'M':
-                dirs = dirs.split(",")
-                print(dirs)
-                dir_text.delete(1.0, END)
-                for i in dirs:
-                    dir_text.insert(1.0, i + '\n')
+            flag = ssl_socket.recv(1024).decode()
+            if bool(flag):
+                folder_list = ssl_socket.recv(1024).decode()
+                file_list = ssl_socket.recv(1024).decode()
+                if len(folder_list)+len(file_list)==0:
+                    dir_text.delete(1.0, END)
+                    dir_text.insert(1.0, "Empty Directory")
+                else:
+                    dir_text.delete(1.0, END)
+                    print(folder_list)
+                    folder_list = folder_list.split(',')
+                    file_list = file_list.split(',')
+                    for i in folder_list:
+                        dir_text.tag_config("my_tag", foreground="blue")
+                        dir_text.insert(1.0, i + '\n', "my_tag")
+                    for i in file_list:
+                        dir_text.insert(1.0, i + '\n')
             else:
+                dirs = ssl_socket.recv(1024).decode()
                 dir_text.delete(1.0, END)
                 dir_text.insert(1.0, dirs)
+                
                 
 
 def upload():
@@ -162,6 +171,8 @@ def ip():
     def exit_func():
         
         try:    
+            global HOST
+            global PORT
             HOST = ip_entry.get()
             PORT = int(port_entry.get())
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as s:

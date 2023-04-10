@@ -8,7 +8,7 @@ context.load_cert_chain(certfile="server.crt", keyfile="server.key")
 
 dir_path = "./SERVER/" 
 
-HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
+HOST = '0.0.0.0'  
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
 
@@ -39,10 +39,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as s:
                         # print("dir path ", dir_path)
                         if os.path.exists(dir_path):
                             dirs = os.listdir(dir_path)
-                            conn.sendall(",".join(dirs).encode())
+                            folder_list = [item for item in dirs if os.path.isdir(dir_path + item)]
+                            file_list = [item for item in dirs if os.path.isfile(dir_path + item)]
+                            conn.send(b'True')
+                            conn.sendall(",".join(folder_list).encode())
+                            conn.sendall(",".join(file_list).encode())
                         else:
                             os.makedirs(dir_path)
                             dirs = f'Made a directory with path => {dir_path}'
+                            conn.send(b'False')
                             conn.sendall(dirs.encode())
                         # print(dirs)
                         print('Path = ', dir_path)
